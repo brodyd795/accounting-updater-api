@@ -1,0 +1,25 @@
+{
+	"name": "accounting-updater",
+	"version": "1.0.0",
+	"description": "Updates personal accounting app database",
+	"main": "index.js",
+	"scripts": {
+		"start-local-port-forwarding": "ssh -L 127.0.0.1:3306:localhost:3306 dingel.dev -N",
+		"start": "node index.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/brodyd795/accounting-updater.git"
+	},
+	"author": "Brody Dingel",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/brodyd795/accounting-updater/issues"
+	},
+	"homepage": "https://github.com/brodyd795/accounting-updater#readme",
+	"dependencies": {
+		"dotenv": "^8.2.0",
+		"imap-simple": "^5.0.0",
+		"serverless-mysql": "^1.5.4"
+	}
+}
