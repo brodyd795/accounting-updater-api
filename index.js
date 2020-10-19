@@ -82,7 +82,8 @@ const parseEmail = async (body) => {
 		// transactions on credit card
 		amountRaw = /charged \$[\d,]+\.\d+ [^\.]+?\./.exec(body)[0];
 		amount = /[\d,]+\.\d+/.exec(amountRaw)[0];
-		amount = parseFloat(amount);
+		amount = amount.replace(",", "");
+		amount = parseFloat(amount) * 100;
 
 		fromAccount = "L_Credit_Card";
 
@@ -115,17 +116,17 @@ const parseEmail = async (body) => {
 		amountRaw = /transaction\s+of\s+\$[\d,]+\.\d+[^\.]+?\./.exec(body)[0];
 		amount = /[\d,]+\.\d+/.exec(amountRaw)[0];
 		amount = amount.replace(",", "");
-		amount = parseFloat(amount);
+		amount = parseFloat(amount) * 100;
 
-		if (amount === parseFloat(rentAmount)) {
+		if (amount === rentAmount) {
 			fromAccount = "A_US_Bank";
 			toAccount = "E_Bills";
 			comment = "Rent";
-		} else if (amount === parseFloat(carPaymentAmount)) {
+		} else if (amount === carPaymentAmount) {
 			fromAccount = "A_US_Bank";
 			toAccount = "E_Bills";
 			comment = "Car payment";
-		} else if (amount > 100) {
+		} else if (amount > 10000) {
 			fromAccount = "A_US_Bank";
 			toAccount = "L_Credit_Card";
 			comment = "Pay off credit card";
@@ -139,9 +140,9 @@ const parseEmail = async (body) => {
 		amountRaw = /Deposit\s+of\s+\$[\d,]+\.\d+/.exec(body)[0];
 		amount = /[\d,]+\.\d+/.exec(amountRaw)[0];
 		amount = amount.replace(",", "");
-		amount = parseFloat(amount);
+		amount = parseFloat(amount) * 100;
 
-		if (amount > parseFloat(salaryAmount)) {
+		if (amount > salaryAmount) {
 			fromAccount = "I_Hy-Vee";
 			comment = "Salary from Hy-Vee";
 		} else {
