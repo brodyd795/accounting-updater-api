@@ -14,34 +14,20 @@ const db = mysql({
 
 const insertTransaction = async (transaction) => {
 	let {
-		id,
 		toAccount,
 		fromAccount,
 		amount,
-		toAccountBalance,
-		fromAccountBalance,
 		comment,
 	} = transaction;
 
 	await db.query(
-		`INSERT INTO transactions VALUES(?, 'brodydingel@gmail.com', ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO transactions (fromAccountId, toAccountId, amount, comment) VALUES(?, ?, ?, ?)`,
 		[
-			id,
 			fromAccount,
 			toAccount,
 			amount,
-			fromAccountBalance,
-			toAccountBalance,
 			comment,
 		]
-	);
-	await db.query(
-		`UPDATE transactions SET to_balance = to_balance + ? WHERE trn_id > ? AND (to_account = ? OR to_account = ?)`,
-		[amount, id, toAccount, fromAccount]
-	);
-	await db.query(
-		`UPDATE transactions SET from_balance = from_balance - ? WHERE trn_id > ? AND (from_account = ? OR from_account = ?)`,
-		[amount, id, toAccount, fromAccount]
 	);
 
 	await db.quit();
@@ -135,8 +121,17 @@ const getLastAccountBalances = async (toAccount, fromAccount, id) => {
 	return lastAccountBalances;
 };
 
+const getAccounts = async () => {
+	const accounts = await db.query(`SELECT id, category, name FROM accounts`);
+
+	await db.quit();
+
+	return accounts;
+}
+
 module.exports = {
 	insertTransaction,
+	getAccounts,
 	getLastId,
 	getTransactionIdentifiers,
 	getLastAccountBalances,
