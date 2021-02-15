@@ -1,5 +1,5 @@
-const mysql = require("serverless-mysql");
-const dotenv = require("dotenv");
+import mysql from 'serverless-mysql';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -12,7 +12,7 @@ const db = mysql({
 	},
 });
 
-const insertTransaction = async (transaction) => {
+export const insertTransaction = async (transaction) => {
 	let {
 		toAccount,
 		fromAccount,
@@ -34,7 +34,7 @@ const insertTransaction = async (transaction) => {
 	return "OK";
 };
 
-const getLastId = async () => {
+export const getLastId = async () => {
 	let lastId;
 
 	lastId = await db.query(`SELECT MAX(trn_id) max_id FROM transactions`);
@@ -44,7 +44,7 @@ const getLastId = async () => {
 	return lastId;
 };
 
-const getTransactionIdentifiers = async () => {
+export const getTransactionIdentifiers = async () => {
 	const rows = await db.query(`SELECT * FROM transaction_identifiers`);
 	await db.quit();
 
@@ -81,7 +81,7 @@ const getTransactionIdentifiers = async () => {
 	return identifiers;
 };
 
-const getLastAccountBalances = async (toAccount, fromAccount, id) => {
+export const getLastAccountBalances = async (toAccount, fromAccount, id) => {
 	const lastAccountBalances = {};
 
 	const toAccountResults = await db.query(
@@ -121,18 +121,10 @@ const getLastAccountBalances = async (toAccount, fromAccount, id) => {
 	return lastAccountBalances;
 };
 
-const getAccounts = async () => {
+export const getAccounts = async () => {
 	const accounts = await db.query(`SELECT id, category, name FROM accounts`);
 
 	await db.quit();
 
 	return accounts;
 }
-
-module.exports = {
-	insertTransaction,
-	getAccounts,
-	getLastId,
-	getTransactionIdentifiers,
-	getLastAccountBalances,
-};

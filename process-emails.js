@@ -1,5 +1,6 @@
-const db = require("./db");
-const dotenv = require("dotenv");
+import dotenv from 'dotenv';
+
+import {insertTransaction, getTransactionIdentifiers, getAccounts} from './db.js';
 
 dotenv.config();
 
@@ -19,15 +20,7 @@ const NAMES = {
 	BILLS: 'Bills'
 };
 
-const run = async () => {
-	// fetch emails here	
-
-	// if (emails.length) {
-	// 	processEmails(emails);
-	// }
-};
-
-const processEmails = async (emails) => {
+export const processEmails = async (emails) => {
 	for (let i = 0; i < emails.length; i++) {
 		const body = emails[i].parts[0].body;
 
@@ -44,7 +37,7 @@ const getAccountId = (categoryToFind, nameToFind, accounts) => accounts.find(({c
 const parseEmail = async (body) => {
 	let amount, toAccount, fromAccount, comment, amountRaw, location;
 
-	const [identifiers, accounts] = await Promise.all([db.getTransactionIdentifiers(), db.getAccounts()]);
+	const [identifiers, accounts] = await Promise.all([getTransactionIdentifiers(), getAccounts()]);
 	const {
 		fastFoodLocations,
 		gasLocations,
@@ -128,7 +121,7 @@ const parseEmail = async (body) => {
 };
 
 const processTransaction = async (transaction) => {
-	await db.insertTransaction(transaction);
+	await insertTransaction(transaction);
 };
 
 async function processTransactions(transactions) {
@@ -136,5 +129,3 @@ async function processTransactions(transactions) {
 		await processTransaction(transaction);
 	}
 }
-
-run();
