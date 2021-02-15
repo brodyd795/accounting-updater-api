@@ -69,7 +69,7 @@ const getEmailsAndMarkAsRead = async (auth) => {
     });
     const emails = rawEmailData.data.messages;
 
-    if (!emails.length) {
+    if (!emails) {
         return [];
     }
 
