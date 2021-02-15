@@ -5,7 +5,8 @@
 	"main": "index.js",
 	"scripts": {
 		"start-local-port-forwarding": "ssh -L 127.0.0.1:3306:localhost:3306 dingel.dev -N",
-		"start": "node index.js"
+		"start": "node index.js",
+		"lint": "eslint --fix . --ext .json --ext .js"
 	},
 	"repository": "git+https://github.com/brodyd795/accounting-updater.git",
 	"author": "Brody Dingel",
@@ -19,5 +20,9 @@
 		"googleapis": "^39.2.0",
 		"serverless-mysql": "^1.5.4"
 	},
-	"type": "module"
+	"type": "module",
+	"devDependencies": {
+		"eslint": "^7.20.0",
+		"eslint-config-get-off-my-lawn": "^5.0.1"
+	}
 }
