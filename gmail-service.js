@@ -1,7 +1,7 @@
-const fs = require('fs');
-const readline = require('readline');
-const {google} = require('googleapis');
-const dotenv = require("dotenv");
+import fs from 'fs';
+import readline from 'readline';
+import googleapis from 'googleapis';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -12,25 +12,9 @@ const SCOPES = [
 ];
 const TOKEN_PATH = 'token.json';
 
-const getEmails = () => {
-    return new Promise((resolve, reject) => {
-        fs.readFile('credentials.json', (err, content) => {
-            console.log('content', content)
-            if (err) {
-                reject(err);
-            };
-        
-            authorize(JSON.parse(content), async (auth) => {
-                const emails = await getEmailsAndMarkAsRead(auth);
-                resolve(emails);
-            })
-        });
-    });
-}
-
 const authorize = (credentials, callback) => {
     const {client_secret, client_id, redirect_uris} = credentials.installed;
-    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
+    const oAuth2Client = new googleapis.google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
 
     fs.readFile(TOKEN_PATH, (err, token) => {
         if (err) {
@@ -41,7 +25,6 @@ const authorize = (credentials, callback) => {
         callback(oAuth2Client);
     });
 }
-
 
 const getNewToken = (oAuth2Client, callback) => {
     const authUrl = oAuth2Client.generateAuthUrl({
@@ -76,34 +59,8 @@ const getNewToken = (oAuth2Client, callback) => {
     });
 };
 
-const getEmailAndMarkAsRead = async ({id}, emailBodies, auth) => {
-    const gmail = google.gmail({version: 'v1', auth});
-    const message = await gmail.users.messages.get({
-        auth,
-        userId: 'me',
-        id
-    });
-    const fromHeader = message.data.payload.headers.find((header) => header.name === 'From');
-    const isFromBank = fromHeader.value.includes(process.env.BANK_EMAIL);
-
-    if (isFromBank) {
-        const rawBody = message.data.payload.parts[0].body.data;
-        const body = Buffer.from(rawBody, 'base64').toString();
-        emailBodies.push(body)
-    }
-
-    await gmail.users.messages.modify({
-        auth,
-        userId: 'me',
-        id,
-        resource: {
-            removeLabelIds: ['UNREAD']
-        }
-    });
-};
-
 const getEmailsAndMarkAsRead = async (auth) => {
-    const gmail = google.gmail({version: 'v1', auth});
+    const gmail = googleapis.google.gmail({version: 'v1', auth});
 
     const rawEmailData = await gmail.users.messages.list({
         auth,
@@ -113,18 +70,29 @@ const getEmailsAndMarkAsRead = async (auth) => {
     const emails = rawEmailData.data.messages;
 
     if (!emails.length) {
-        return;
+        return [];
     }
 
     let emailBodies = [];
 
     for (let email of emails) {
-        await getEmailAndMarkAsRead(email, emailBodies, auth);
+        const message = await gmail.users.messages.get({auth, userId: 'me', id: email.id});
+        const fromHeader = message.data.payload.headers.find((header) => header.name === 'From');
+        const isFromBank = fromHeader.value.includes(process.env.BANK_EMAIL);
+    
+        if (isFromBank) {
+            const body = Buffer.from(message.data.payload.parts[0].body.data, 'base64').toString();
+            emailBodies.push(body)
+        }
+
+        await gmail.users.messages.modify({auth, userId: 'me', id: email.id, resource: {removeLabelIds: ['UNREAD']}});
     }
 
     return emailBodies;
 };
 
-module.exports = {
-    getEmails
-};
+export const getEmails = () => new Promise((resolve) => {
+    const credentials = JSON.parse(fs.readFileSync('credentials.json'));
+
+    authorize(credentials, (auth) => resolve(getEmailsAndMarkAsRead(auth)));
+});
