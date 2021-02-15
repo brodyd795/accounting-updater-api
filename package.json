@@ -22,5 +22,6 @@
 		"googleapis": "^39.2.0",
 		"imap-simple": "^5.0.0",
 		"serverless-mysql": "^1.5.4"
-	}
+	},
+	"type": "module"
 }

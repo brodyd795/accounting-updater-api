@@ -1,4 +1,4 @@
-const {getEmails} = require("./gmail-service");
+import {getEmails} from './gmail-service.js';
 
 const run = async () => {
     const emails = await getEmails();
