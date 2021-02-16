@@ -1,12 +1,9 @@
-import path from 'path';
-
 const config = {
-    testEnvironment: 'jest-environment-jsdom',
+    collectCoverageFrom: ['./src/**/*.js'],
     moduleDirectories: [
-        'node_modules',
-        'test'
+        'node_modules'
     ],
-    collectCoverageFrom: ['**/*.js']
+    testEnvironment: 'jest-environment-jsdom'
 };
 
 export default config;
