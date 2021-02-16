@@ -3,7 +3,7 @@ import {getEmails} from './gmail-service.js';
 
 export const update = async () => {
     const emails = await getEmails();
-    console.log('emails', emails)
+    // console.log('emails', emails)
 
 	// if (emails.length) {
 	// 	processEmails(emails);
