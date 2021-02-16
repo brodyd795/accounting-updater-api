@@ -6,7 +6,9 @@
 	"scripts": {
 		"start-local-port-forwarding": "ssh -L 127.0.0.1:3306:localhost:3306 dingel.dev -N",
 		"start": "node index.js",
-		"lint": "eslint --fix . --ext .json --ext .js"
+		"lint": "eslint --fix . --ext .json --ext .js",
+		"test": "jest",
+		"coverage": "jest --coverage"
 	},
 	"repository": "git+https://github.com/brodyd795/accounting-updater.git",
 	"author": "Brody Dingel",
@@ -22,7 +24,11 @@
 	},
 	"type": "module",
 	"devDependencies": {
+		"@babel/plugin-transform-runtime": "^7.12.15",
+		"@babel/preset-env": "^7.12.16",
+		"chance": "^1.1.7",
 		"eslint": "^7.20.0",
-		"eslint-config-get-off-my-lawn": "^5.0.1"
+		"eslint-config-get-off-my-lawn": "^5.0.1",
+		"jest": "^26.6.1"
 	}
 }
