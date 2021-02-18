@@ -1,12 +1,9 @@
-import fs from 'fs';
 import googleapis from 'googleapis';
 import dotenv from 'dotenv';
 
-import {authorize} from './gmail-auth.js';
-
 dotenv.config();
 
-const getEmailsAndMarkAsRead = async (auth) => {
+export const getEmailsAndMarkAsRead = async (auth) => {
     const gmail = googleapis.google.gmail({version: 'v1', auth});
 
     const rawEmailData = await gmail.users.messages.list({
@@ -38,8 +35,3 @@ const getEmailsAndMarkAsRead = async (auth) => {
     return emailBodies;
 };
 
-export const getEmails = () => new Promise((resolve) => {
-    const credentials = JSON.parse(fs.readFileSync('credentials.json'));
-
-    authorize(credentials, (auth) => resolve(getEmailsAndMarkAsRead(auth)));
-});
