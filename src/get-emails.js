@@ -26,7 +26,7 @@ const getEmails = async (auth) => {
     for (const email of emails) {
         const message = await gmail.users.messages.get({auth, userId: 'me', id: email.id});
         const fromHeader = message.data.payload.headers.find((header) => header.name === 'From');
-        const isFromBank = fromHeader.value.includes(process.env.BANK_EMAIL);
+        const isFromBank = fromHeader.value.toLowerCase().includes(`${process.env.BANK_EMAIL}@`);
 
         if (isFromBank) {
             const body = Buffer.from(message.data.payload.parts[0].body.data, 'base64').toString();
