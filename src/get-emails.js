@@ -1,9 +1,13 @@
+import fs from 'fs';
+
 import googleapis from 'googleapis';
 import dotenv from 'dotenv';
 
+import {authorize} from './gmail-auth.js';
+
 dotenv.config();
 
-export const getEmailsAndMarkAsRead = async (auth) => {
+const getEmails = async (auth) => {
     const gmail = googleapis.google.gmail({version: 'v1', auth});
 
     const rawEmailData = await gmail.users.messages.list({
@@ -17,16 +21,17 @@ export const getEmailsAndMarkAsRead = async (auth) => {
         return [];
     }
 
-    let emailBodies = [];
+    const emailBodies = [];
 
-    for (let email of emails) {
+    for (const email of emails) {
         const message = await gmail.users.messages.get({auth, userId: 'me', id: email.id});
         const fromHeader = message.data.payload.headers.find((header) => header.name === 'From');
         const isFromBank = fromHeader.value.includes(process.env.BANK_EMAIL);
-    
+
         if (isFromBank) {
             const body = Buffer.from(message.data.payload.parts[0].body.data, 'base64').toString();
-            emailBodies.push(body)
+
+            emailBodies.push(body);
         }
 
         await gmail.users.messages.modify({auth, userId: 'me', id: email.id, resource: {removeLabelIds: ['UNREAD']}});
@@ -35,3 +40,8 @@ export const getEmailsAndMarkAsRead = async (auth) => {
     return emailBodies;
 };
 
+export const getEmailsAndMarkAsRead = () => new Promise((resolve) => {
+    const credentials = JSON.parse(fs.readFileSync('credentials.json'));
+
+    authorize(credentials, (auth) => resolve(getEmails(auth)));
+});
