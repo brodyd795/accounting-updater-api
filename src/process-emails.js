@@ -25,86 +25,35 @@ const NAMES = {
 
 const getAccountId = (categoryToFind, nameToFind, accounts) => accounts.find(({category, accountName}) => category === categoryToFind && accountName === nameToFind).accountId;
 
-const parseEmail = async (body) => {
-    let amount,
-        toAccount,
-        fromAccount,
-        comment,
-        amountRaw,
-        location;
+const getAmount = (regexOne, regexTwo, body) => {
+    const amountRaw = regexOne.exec(body)[0];
+    let amount = regexTwo.exec(amountRaw)[0];
 
-    const {identifiers, accounts} = await getAccountsAndTransactionIdentifiers();
-    const {
-        fastFoodLocations,
-        gasLocations,
-        groceriesLocations,
-        rentAmount,
-        carPaymentAmount,
-        salaryAmount
-    } = identifiers;
+    amount = amount.replace(',', '');
+    amount = parseFloat(amount) * 100;
 
-    const getAmount = (regexOne, regexTwo) => {
-        amountRaw = regexOne.exec(body)[0];
-        amount = regexTwo.exec(amountRaw)[0];
-        amount = amount.replace(',', '');
-        amount = parseFloat(amount) * 100;
+    return amount;
+};
 
-        return amount;
-    };
+const parseCreditCardPurchaseEmail = (body, identifiers, accounts) => {
+    const {fastFoodLocations, gasLocations, groceriesLocations} = identifiers;
+    const amountAndLocation = /charged \$[\d,]+\.\d+ [^\.]+?\./.exec(body)[0];
+    const amountRaw = /[\d,]+\.\d+/.exec(amountAndLocation)[0];
+    const amount = parseFloat(amountRaw.replace(',', '') * 100);
+    const fromAccount = getAccountId(CATEGORIES.DEBTS, NAMES.CREDIT_CARD, accounts);
+    const locationRaw = /at [^\.]+?\./.exec(amountAndLocation)[0];
+    const location = locationRaw.replace(/at |\./g, '');
+    const comment = location;
+    let toAccount;
 
-    if (body.includes('charged')) {
-        // transactions on credit card
-        amount = getAmount(new RegExp(/charged \$[\d,]+\.\d+ [^\.]+?\./), new RegExp(/[\d,]+\.\d+/));
-        fromAccount = getAccountId(CATEGORIES.DEBTS, NAMES.CREDIT_CARD, accounts);
-
-        location = /at [^\.]+?\./.exec(amountRaw)[0];
-        location = location.replace(/at |\./g, '');
-        comment = location;
-
-        // check if the location contains a substring of a location type (e.g., "McDonalds", "Hy-Vee")
-        if (fastFoodLocations.some((fastFoodLocation) => location.includes(fastFoodLocation))) {
-            toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.FAST_FOOD, accounts);
-        } else if (gasLocations.some((gasLocation) => location.includes(gasLocation))) {
-            toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.GAS, accounts);
-        } else if (groceriesLocations.some((groceriesLocation) => location.includes(groceriesLocation))) {
-            toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.GROCERIES, accounts);
-        } else {
-            toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.OTHER_EXPENSE, accounts);
-        }
-    } else if (body.includes('Your transaction of')) {
-        // withdrawals from checking account
-        amount = getAmount(new RegExp(/transaction\s+of\s+\$[\d,]+\.\d+[^.]+?\./), new RegExp(/[\d,]+\.\d+/));
-
-        if (amount === rentAmount) {
-            fromAccount = getAccountId(CATEGORIES.ASSETS, NAMES.US_BANK, accounts);
-            toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.BILLS, accounts);
-            comment = 'Rent';
-        } else if (amount === carPaymentAmount) {
-            fromAccount = getAccountId(CATEGORIES.ASSETS, NAMES.US_BANK, accounts);
-            toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.BILLS, accounts);
-            comment = 'Car payment';
-        } else if (amount > 10000) {
-            fromAccount = getAccountId(CATEGORIES.ASSETS, NAMES.US_BANK, accounts);
-            toAccount = getAccountId(CATEGORIES.DEBTS, NAMES.CREDIT_CARD, accounts);
-            comment = 'Pay off credit card';
-        } else {
-            fromAccount = getAccountId(CATEGORIES.ASSETS, NAMES.US_BANK, accounts);
-            toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.OTHER, accounts);
-            comment = 'Other';
-        }
-    } else if (body.includes('Deposit')) {
-        // 	deposits to checking account
-        amount = getAmount(new RegExp(/Deposit\s+of\s+\$[\d,]+\.\d+/), new RegExp(/[\d,]+\.\d+/));
-
-        if (amount > salaryAmount) {
-            fromAccount = getAccountId(CATEGORIES.INCOME, NAMES.HY_VEE, accounts);
-            comment = 'Salary from Hy-Vee';
-        } else {
-            fromAccount = getAccountId(CATEGORIES.INCOME, NAMES.OTHER_INCOME, accounts);
-            comment = 'Other income';
-        }
-
-        toAccount = getAccountId(CATEGORIES.ASSETS, NAMES.US_BANK, accounts);
+    if (fastFoodLocations.some((fastFoodLocation) => location.includes(fastFoodLocation))) {
+        toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.FAST_FOOD, accounts);
+    } else if (gasLocations.some((gasLocation) => location.includes(gasLocation))) {
+        toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.GAS, accounts);
+    } else if (groceriesLocations.some((groceriesLocation) => location.includes(groceriesLocation))) {
+        toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.GROCERIES, accounts);
+    } else {
+        toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.OTHER_EXPENSE, accounts);
     }
 
     return {
@@ -113,6 +62,68 @@ const parseEmail = async (body) => {
         fromAccount,
         toAccount
     };
+};
+
+const parseCheckingWithdrawalEmail = (body, identifiers, accounts) => {
+    const amount = getAmount(new RegExp(/transaction\s+of\s+\$[\d,]+\.\d+[^.]+?\./), new RegExp(/[\d,]+\.\d+/), body);
+    const fromAccount = getAccountId(CATEGORIES.ASSETS, NAMES.US_BANK, accounts);
+    let toAccount,
+        comment;
+
+    if (amount === identifiers.rentAmount) {
+        toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.BILLS, accounts);
+        comment = 'Rent';
+    } else if (amount === identifiers.carPaymentAmount) {
+        toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.BILLS, accounts);
+        comment = 'Car payment';
+    } else if (amount > 10000) {
+        toAccount = getAccountId(CATEGORIES.DEBTS, NAMES.CREDIT_CARD, accounts);
+        comment = 'Pay off credit card';
+    } else {
+        toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.OTHER, accounts);
+        comment = 'Other';
+    }
+
+    return {
+        amount,
+        comment,
+        fromAccount,
+        toAccount
+    };
+};
+
+const parseDepositEmail = (body, identifiers, accounts) => {
+    const amount = getAmount(new RegExp(/Deposit\s+of\s+\$[\d,]+\.\d+/), new RegExp(/[\d,]+\.\d+/), body);
+    const toAccount = getAccountId(CATEGORIES.ASSETS, NAMES.US_BANK, accounts);
+    let fromAccount,
+        comment;
+
+    if (amount > identifiers.salaryAmount) {
+        fromAccount = getAccountId(CATEGORIES.INCOME, NAMES.HY_VEE, accounts);
+        comment = 'Salary from Hy-Vee';
+    } else {
+        fromAccount = getAccountId(CATEGORIES.INCOME, NAMES.OTHER_INCOME, accounts);
+        comment = 'Other income';
+    }
+
+    return {
+        amount,
+        comment,
+        fromAccount,
+        toAccount
+    };
+};
+
+const parseEmail = async (body) => {
+    const {identifiers, accounts} = await getAccountsAndTransactionIdentifiers();
+
+    if (body.includes('charged')) {
+        return parseCreditCardPurchaseEmail(body, identifiers, accounts);
+    } else if (body.includes('Your transaction of')) {
+        return parseCheckingWithdrawalEmail(body, identifiers, accounts);
+    } else if (body.includes('Deposit')) {
+        return parseDepositEmail(body, identifiers, accounts);
+    }
 };
 
 const processTransaction = async (transaction) => {
