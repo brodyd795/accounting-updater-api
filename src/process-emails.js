@@ -46,11 +46,11 @@ const parseCreditCardPurchaseEmail = (body, identifiers, accounts) => {
     const comment = location;
     let toAccount;
 
-    if (fastFoodLocations.some((fastFoodLocation) => location.includes(fastFoodLocation))) {
+    if (fastFoodLocations.some((fastFoodLocation) => location.toLowerCase().includes(fastFoodLocation.toLowerCase()))) {
         toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.FAST_FOOD, accounts);
-    } else if (gasLocations.some((gasLocation) => location.includes(gasLocation))) {
+    } else if (gasLocations.some((gasLocation) => location.toLowerCase().includes(gasLocation.toLowerCase()))) {
         toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.GAS, accounts);
-    } else if (groceriesLocations.some((groceriesLocation) => location.includes(groceriesLocation))) {
+    } else if (groceriesLocations.some((groceriesLocation) => location.toLowerCase().includes(groceriesLocation.toLowerCase()))) {
         toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.GROCERIES, accounts);
     } else {
         toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.OTHER_EXPENSE, accounts);
