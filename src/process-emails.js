@@ -43,7 +43,7 @@ const parseCreditCardPurchaseEmail = (body, identifiers, accounts) => {
     const fromAccount = getAccountId(CATEGORIES.DEBTS, NAMES.CREDIT_CARD, accounts);
     const locationRaw = /at [^\.]+?\./.exec(amountAndLocation)[0];
     const location = locationRaw.replace(/at |\./g, '');
-    const comment = location;
+    const comment = location.replace(/&.+;/, '\'');
     let toAccount;
 
     if (fastFoodLocations.some((fastFoodLocation) => location.toLowerCase().includes(fastFoodLocation.toLowerCase()))) {
