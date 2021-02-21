@@ -5,4 +5,4 @@ cd ${DIR}
 source /root/.nvm/nvm.sh
 nvm use
 
-node ./index.js
+node ../index.js
