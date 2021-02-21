@@ -37,11 +37,11 @@ const getAmount = (regexOne, regexTwo, body) => {
 
 const parseCreditCardPurchaseEmail = (body, identifiers, accounts) => {
     const {fastFoodLocations, gasLocations, groceriesLocations} = identifiers;
-    const amountAndLocation = /charged \$[\d,]+\.\d+ [^\.]+?\./.exec(body)[0];
+    const amountAndLocation = /charged \$[\d,]+\.\d+ [^.]+?\./.exec(body)[0];
     const amountRaw = /[\d,]+\.\d+/.exec(amountAndLocation)[0];
     const amount = parseFloat(amountRaw.replace(',', '') * 100);
     const fromAccount = getAccountId(CATEGORIES.DEBTS, NAMES.CREDIT_CARD, accounts);
-    const locationRaw = /at [^\.]+?\./.exec(amountAndLocation)[0];
+    const locationRaw = /at [^.]+?\./.exec(amountAndLocation)[0];
     const location = locationRaw.replace(/at |\./g, '');
     const comment = location.replace(/&.+;/, '\'');
     let toAccount;
@@ -121,9 +121,9 @@ const parseEmail = async (body) => {
         return parseCreditCardPurchaseEmail(body, identifiers, accounts);
     } else if (body.includes('Your transaction of')) {
         return parseCheckingWithdrawalEmail(body, identifiers, accounts);
-    } else if (body.includes('Deposit')) {
-        return parseDepositEmail(body, identifiers, accounts);
     }
+
+    return parseDepositEmail(body, identifiers, accounts);
 };
 
 const processTransaction = async (transaction) => {

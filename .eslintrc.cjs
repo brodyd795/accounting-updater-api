@@ -1,6 +1,8 @@
 module.exports = {
     extends: 'get-off-my-lawn',
     rules: {
-        // enable additional rules, override rule options, or disable rules
+        'no-await-in-loop': 0,
+        'no-sync': 0,
+        'require-unicode-regexp': 0
     }
 };

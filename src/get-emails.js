@@ -8,12 +8,15 @@ import {authorize} from './gmail-auth.js';
 dotenv.config();
 
 const getEmails = async (auth) => {
-    const gmail = googleapis.google.gmail({version: 'v1', auth});
+    const gmail = googleapis.google.gmail({
+        auth,
+        version: 'v1'
+    });
 
     const rawEmailData = await gmail.users.messages.list({
         auth,
-        userId: 'me',
-        labelIds: 'UNREAD'
+        labelIds: 'UNREAD',
+        userId: 'me'
     });
     const emails = rawEmailData.data.messages;
 
@@ -24,7 +27,11 @@ const getEmails = async (auth) => {
     const emailBodies = [];
 
     for (const email of emails) {
-        const message = await gmail.users.messages.get({auth, userId: 'me', id: email.id});
+        const message = await gmail.users.messages.get({
+            auth,
+            id: email.id,
+            userId: 'me'
+        });
         const fromHeader = message.data.payload.headers.find((header) => header.name === 'From');
         const isFromBank = fromHeader.value.toLowerCase().includes(`${process.env.BANK_EMAIL}@`);
 
@@ -34,7 +41,14 @@ const getEmails = async (auth) => {
             emailBodies.push(body);
         }
 
-        await gmail.users.messages.modify({auth, userId: 'me', id: email.id, resource: {removeLabelIds: ['UNREAD']}});
+        await gmail.users.messages.modify({
+            auth,
+            id: email.id,
+            resource: {
+                removeLabelIds: ['UNREAD']
+            },
+            userId: 'me'
+        });
     }
 
     return emailBodies;

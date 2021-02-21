@@ -5,10 +5,10 @@ dotenv.config();
 
 const db = mysql({
     config: {
-        host: process.env.DB_HOST,
         database: process.env.DB_NAME,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD
+        host: process.env.DB_HOST,
+        password: process.env.DB_PASSWORD,
+        user: process.env.DB_USER
     }
 });
 
@@ -55,11 +55,11 @@ export const getAccountsAndTransactionIdentifiers = async () => {
     await db.quit();
 
     const identifiers = {
+        carPaymentAmount: null,
         fastFoodLocations: [],
         gasLocations: [],
         groceriesLocations: [],
         rentAmount: null,
-        carPaymentAmount: null,
         salaryAmount: null
     };
 
@@ -85,13 +85,13 @@ export const getAccountsAndTransactionIdentifiers = async () => {
                 identifiers.carPaymentAmount = row.identifier;
 
                 break;
-            case 'salary':
+            default:
                 identifiers.salaryAmount = row.identifier;
         }
     }
 
     return {
-        identifiers,
-        accounts
+        accounts,
+        identifiers
     };
 };
