@@ -1,4 +1,4 @@
-import {getLastMonthsTransactionsAndPreviousBalances, insertNewBalances} from './src/db.js';
+import {getLastMonthsTransactionsAndPreviousBalances, insertNewBalances} from './db.js';
 
 const updateBalances = async () => {
     const {balances, transactions} = await getLastMonthsTransactionsAndPreviousBalances();
