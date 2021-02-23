@@ -1,3 +1,3 @@
-import {update} from './src/update.js';
+import {update} from './src/update-transactions.js';
 
 update();

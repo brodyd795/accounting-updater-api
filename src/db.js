@@ -1,5 +1,6 @@
 import mysql from 'serverless-mysql';
 import dotenv from 'dotenv';
+import dateFns from 'date-fns';
 
 dotenv.config();
 
@@ -12,6 +13,8 @@ const db = mysql({
     }
 });
 
+const formatDateForDb = (str) => str.toISOString().replace('T', ' ').replace(/\.\d{3}Z/, '');
+
 export const insertTransaction = async (transaction) => {
     const {
         toAccount,
@@ -20,9 +23,13 @@ export const insertTransaction = async (transaction) => {
         comment
     } = transaction;
 
+    const now = new Date();
+    const date = now.toISOString().split('T')[0];
+
     await db.query(
-        'INSERT INTO transactions (fromAccountId, toAccountId, amount, comment) VALUES(?, ?, ?, ?)',
+        'INSERT INTO transactions (date, fromAccountId, toAccountId, amount, comment) VALUES(?, ?, ?, ?, ?)',
         [
+            date,
             fromAccount,
             toAccount,
             amount,
@@ -30,7 +37,7 @@ export const insertTransaction = async (transaction) => {
         ]
     );
 
-    await db.quit();
+    db.quit();
 
     return 'OK';
 };
@@ -41,7 +48,7 @@ export const getLastId = async () => {
     lastId = await db.query('SELECT MAX(trn_id) max_id FROM transactions');
 
     lastId = lastId[0]['max_id'];
-    await db.quit();
+    db.quit();
 
     return lastId;
 };
@@ -52,7 +59,7 @@ export const getAccountsAndTransactionIdentifiers = async () => {
         db.query('SELECT * FROM transaction_identifiers')
     ]);
 
-    await db.quit();
+    db.quit();
 
     const identifiers = {
         carPaymentAmount: null,
@@ -94,4 +101,33 @@ export const getAccountsAndTransactionIdentifiers = async () => {
         accounts,
         identifiers
     };
+};
+
+export const getLastMonthsTransactionsAndPreviousBalances = async () => {
+    const startOfMonthToBalance = dateFns.subHours(dateFns.startOfMonth(new Date()), 6);
+    const startOfNewMonth = dateFns.subHours(dateFns.addMonths(startOfMonthToBalance, 1), 6);
+    const formattedStartOfMonthToBalance = formatDateForDb(startOfMonthToBalance);
+    const formattedStartOfNewMonth = formatDateForDb(startOfNewMonth);
+
+    const [balances, transactions] = await Promise.all([
+        db.query('SELECT accountId, balance FROM balances WHERE date = ?', [formattedStartOfMonthToBalance]),
+        db.query('SELECT * FROM transactions WHERE date >= ? AND date < ?', [formattedStartOfMonthToBalance, formattedStartOfNewMonth])
+    ]);
+
+    db.quit();
+
+    return {
+        balances,
+        transactions
+    };
+};
+
+export const insertNewBalances = async (balances) => {
+    const startOfNewMonth = dateFns.subHours(dateFns.addMonths(dateFns.startOfMonth(new Date()), 1), 6);
+    const formattedStartOfNewMonth = formatDateForDb(startOfNewMonth);
+
+    const valuesString = Object.entries(balances).reduce((acc, current) => `${acc}, (${current[0]}, ${current[1]}, '${formattedStartOfNewMonth}')`, '').slice(2);
+
+    await db.query(`INSERT INTO balances (accountId, balance, date) values ${valuesString}`);
+    db.quit();
 };
