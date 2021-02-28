@@ -1,6 +1,6 @@
 import {getLastMonthsTransactionsAndPreviousBalances, insertNewBalances} from './db.js';
 
-const updateBalances = async () => {
+export const updateBalances = async () => {
     const {balances, transactions} = await getLastMonthsTransactionsAndPreviousBalances();
 
     const balancesObject = balances.reduce((acc, current) => ({
@@ -17,5 +17,3 @@ const updateBalances = async () => {
 
     await insertNewBalances(balancesObject);
 };
-
-updateBalances();

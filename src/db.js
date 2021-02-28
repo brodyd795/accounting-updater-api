@@ -122,6 +122,11 @@ export const getLastMonthsTransactionsAndPreviousBalances = async () => {
     };
 };
 
+// todo:
+// verify that nothing in the update-transactions script was broken
+// check for any cleanup, like calling the update functions
+// set up rebalance script!
+
 export const insertNewBalances = async (balances) => {
     const startOfNewMonth = dateFns.subHours(dateFns.addMonths(dateFns.startOfMonth(new Date()), 1), 6);
     const formattedStartOfNewMonth = formatDateForDb(startOfNewMonth);
