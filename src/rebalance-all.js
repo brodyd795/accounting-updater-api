@@ -8,7 +8,7 @@ const rebalanceAll = async () => {
     let balances = {};
     let year = transactions[0].date.getFullYear();
     let month = transactions[0].date.getMonth();
-    let balanceDate = `${year}-${month + 1}-01`;
+    let balanceDate = `${year}-${`${month + 1}`.padStart(2, '0')}-01`;
 
     const previousBalanceDate = balanceDate;
 
@@ -25,9 +25,8 @@ const rebalanceAll = async () => {
 
         /*
          * TODO: handle 12 months
-         * TODO: handle issue with single-digit months
          */
-        balanceDate = `${year}-${month + 1}-01`;
+        balanceDate = `${year}-${`${month + 1}`.padStart(2, '0')}-01`;
 
         let initilizeFrom,
             initilizeTo;
@@ -67,6 +66,7 @@ const rebalanceAll = async () => {
             }
         };
     });
+    console.log('balances', balances)
 };
 
 rebalanceAll();
