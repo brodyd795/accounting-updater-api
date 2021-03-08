@@ -6,7 +6,7 @@ dotenv.config();
 
 const db = mysql({
     config: {
-        database: process.env.DB_NAME,
+        database: `${process.env.DB_NAME}_DEV`,
         host: process.env.DB_HOST,
         password: process.env.DB_PASSWORD,
         user: process.env.DB_USER
@@ -40,17 +40,6 @@ export const insertTransaction = async (transaction) => {
     db.quit();
 
     return 'OK';
-};
-
-export const getLastId = async () => {
-    let lastId;
-
-    lastId = await db.query('SELECT MAX(trn_id) max_id FROM transactions');
-
-    lastId = lastId[0]['max_id'];
-    db.quit();
-
-    return lastId;
 };
 
 export const getAccountsAndTransactionIdentifiers = async () => {
@@ -130,4 +119,19 @@ export const insertNewBalances = async (balances) => {
 
     await db.query(`INSERT INTO balances (accountId, balance, date) values ${valuesString}`);
     db.quit();
+};
+
+export const deleteAllBalances = async () => {
+    await db.query('DELETE FROM balances WHERE balanceId > 0');
+    db.quit();
+
+    return;
+};
+
+export const selectAllTransactions = async () => {
+    const transactions = await db.query('SELECT date, fromAccountId, toAccountId, amount FROM transactions ORDER BY date');
+
+    db.quit();
+
+    return transactions;
 };
