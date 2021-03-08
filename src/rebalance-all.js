@@ -6,27 +6,14 @@ const rebalanceAll = async () => {
     const transactions = await selectAllTransactions();
 
     let balances = {};
-    let year = transactions[0].date.getFullYear();
-    let month = transactions[0].date.getMonth();
-    let balanceDate = `${year}-${`${month + 1}`.padStart(2, '0')}-01`;
+    let balanceDate = `${transactions[0].date.getFullYear()}-${`${transactions[0].date.getMonth() + 1}`.padStart(2, '0')}-01`;
 
     const previousBalanceDate = balanceDate;
 
     transactions.forEach((transaction) => {
         const {date, fromAccountId, toAccountId, amount} = transaction;
 
-        if (date.getMonth() !== month) {
-            month++;
-        }
-
-        if (date.getFullYear() !== year) {
-            year++;
-        }
-
-        /*
-         * TODO: handle 12 months
-         */
-        balanceDate = `${year}-${`${month + 1}`.padStart(2, '0')}-01`;
+        balanceDate = `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, '0')}-01`;
 
         let initilizeFrom,
             initilizeTo;
