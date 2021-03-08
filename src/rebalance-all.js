@@ -1,19 +1,21 @@
 import {deleteAllBalances, selectAllTransactions} from './db.js';
 
+const formatBalanceDate = (date) => `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, '0')}-01`;
+
 const rebalanceAll = async () => {
     await deleteAllBalances();
 
     const transactions = await selectAllTransactions();
 
     let balances = {};
-    let balanceDate = `${transactions[0].date.getFullYear()}-${`${transactions[0].date.getMonth() + 1}`.padStart(2, '0')}-01`;
+    let balanceDate = formatBalanceDate(transactions[0].date);
 
     const previousBalanceDate = balanceDate;
 
     transactions.forEach((transaction) => {
         const {date, fromAccountId, toAccountId, amount} = transaction;
 
-        balanceDate = `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, '0')}-01`;
+        balanceDate = formatBalanceDate(date);
 
         let initilizeFrom,
             initilizeTo;
