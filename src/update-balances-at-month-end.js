@@ -1,6 +1,6 @@
 import {getLastMonthsTransactionsAndPreviousBalances, insertNewBalances} from './db.js';
 
-const updateBalances = async () => {
+const updateBalancesAtMonthEnd = async () => {
     const {balances, transactions} = await getLastMonthsTransactionsAndPreviousBalances();
 
     const balancesObject = balances.reduce((acc, current) => ({
@@ -18,4 +18,4 @@ const updateBalances = async () => {
     await insertNewBalances(balancesObject);
 };
 
-updateBalances();
+updateBalancesAtMonthEnd();
