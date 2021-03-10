@@ -21,6 +21,18 @@ const getPreviousBalanceDate = (currentBalanceDate, previousBalanceDate) => {
     return previousBalanceDate;
 };
 
+const getCurrentAccountBalance = (accountId, balances, currentBalanceDate, previousBalanceDate) => {
+    if (!balances[accountId]) {
+        return 0;
+    } else if (balances[accountId][currentBalanceDate]) {
+        return balances[accountId][currentBalanceDate];
+    } else if (balances[accountId][previousBalanceDate]) {
+        return balances[accountId][previousBalanceDate];
+    }
+
+    return 0;
+};
+
 const rebalanceAll = async () => {
     await deleteAllBalances();
 
@@ -36,31 +48,8 @@ const rebalanceAll = async () => {
         currentBalanceDate = formatBalanceDate(date);
         previousBalanceDate = getPreviousBalanceDate(currentBalanceDate, previousBalanceDate);
 
-        let initilizeFrom,
-            initilizeTo;
-
-        if (!balances[fromAccountId]) {
-            initilizeFrom = 0;
-        } else if (balances[fromAccountId][currentBalanceDate]) {
-            initilizeFrom = balances[fromAccountId][currentBalanceDate];
-        } else if (balances[fromAccountId][previousBalanceDate]) {
-            initilizeFrom = balances[fromAccountId][previousBalanceDate];
-        } else {
-            initilizeFrom = 0;
-        }
-
-        if (!balances[toAccountId]) {
-            initilizeTo = 0;
-        } else if (balances[toAccountId][currentBalanceDate]) {
-            initilizeTo = balances[toAccountId][currentBalanceDate];
-        } else if (balances[toAccountId][previousBalanceDate]) {
-            initilizeTo = balances[toAccountId][previousBalanceDate];
-        } else {
-            initilizeTo = 0;
-        }
-
-        const fromBalance = initilizeFrom - amount;
-        const toBalance = initilizeTo + amount;
+        const fromBalance = getCurrentAccountBalance(fromAccountId, balances, currentBalanceDate, previousBalanceDate) - amount;
+        const toBalance = getCurrentAccountBalance(toAccountId, balances, currentBalanceDate, previousBalanceDate) + amount;
 
         balances = {
             ...balances,
