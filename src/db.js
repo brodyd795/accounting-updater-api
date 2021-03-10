@@ -6,7 +6,7 @@ dotenv.config();
 
 const db = mysql({
     config: {
-        database: `${process.env.DB_NAME}`,
+        database: process.env.DB_NAME,
         host: process.env.DB_HOST,
         password: process.env.DB_PASSWORD,
         user: process.env.DB_USER
