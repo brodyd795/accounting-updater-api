@@ -33,6 +33,22 @@ const getCurrentAccountBalance = (accountId, balances, currentBalanceDate, previ
     return 0;
 };
 
+const formatBalancesForDb = (balances) => {
+    const rows = [];
+
+    Object.entries(balances).forEach(([accountId, values]) => {
+        Object.entries(values).forEach(([date, balance]) => {
+            rows.push({
+                accountId,
+                balance,
+                date
+            });
+        });
+    });
+
+    return rows;
+};
+
 const rebalanceAll = async () => {
     await deleteAllBalances();
 
@@ -63,7 +79,7 @@ const rebalanceAll = async () => {
             }
         };
     });
-    console.log('balances', balances);
+    const balancesToInsert = formatBalancesForDb(balances);
 };
 
 rebalanceAll();
