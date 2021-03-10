@@ -1,6 +1,25 @@
+import dateFns from 'date-fns';
+
 import {deleteAllBalances, selectAllTransactions} from './db.js';
 
 const formatBalanceDate = (date) => `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, '0')}-01`;
+
+const getPreviousBalanceDate = (currentBalanceDate, previousBalanceDate) => {
+    if (previousBalanceDate === undefined) {
+        const monthBeforeCurrentDate = dateFns.subMonths(new Date(currentBalanceDate), 1);
+        const newPreviousBalanceDate = formatBalanceDate(monthBeforeCurrentDate);
+
+        return newPreviousBalanceDate;
+    }
+
+    if (dateFns.differenceInMonths(new Date(currentBalanceDate), new Date(previousBalanceDate)) > 1) {
+        const newPreviousBalanceDate = formatBalanceDate(new Date(currentBalanceDate));
+
+        return newPreviousBalanceDate;
+    }
+
+    return previousBalanceDate;
+};
 
 const rebalanceAll = async () => {
     await deleteAllBalances();
@@ -8,22 +27,22 @@ const rebalanceAll = async () => {
     const transactions = await selectAllTransactions();
 
     let balances = {};
-    let balanceDate = formatBalanceDate(transactions[0].date);
-
-    const previousBalanceDate = balanceDate;
+    let currentBalanceDate;
+    let previousBalanceDate;
 
     transactions.forEach((transaction) => {
         const {date, fromAccountId, toAccountId, amount} = transaction;
 
-        balanceDate = formatBalanceDate(date);
+        currentBalanceDate = formatBalanceDate(date);
+        previousBalanceDate = getPreviousBalanceDate(currentBalanceDate, previousBalanceDate);
 
         let initilizeFrom,
             initilizeTo;
 
         if (!balances[fromAccountId]) {
             initilizeFrom = 0;
-        } else if (balances[fromAccountId][balanceDate]) {
-            initilizeFrom = balances[fromAccountId][balanceDate];
+        } else if (balances[fromAccountId][currentBalanceDate]) {
+            initilizeFrom = balances[fromAccountId][currentBalanceDate];
         } else if (balances[fromAccountId][previousBalanceDate]) {
             initilizeFrom = balances[fromAccountId][previousBalanceDate];
         } else {
@@ -32,8 +51,8 @@ const rebalanceAll = async () => {
 
         if (!balances[toAccountId]) {
             initilizeTo = 0;
-        } else if (balances[toAccountId][balanceDate]) {
-            initilizeTo = balances[toAccountId][balanceDate];
+        } else if (balances[toAccountId][currentBalanceDate]) {
+            initilizeTo = balances[toAccountId][currentBalanceDate];
         } else if (balances[toAccountId][previousBalanceDate]) {
             initilizeTo = balances[toAccountId][previousBalanceDate];
         } else {
@@ -47,15 +66,15 @@ const rebalanceAll = async () => {
             ...balances,
             [fromAccountId]: {
                 ...balances[fromAccountId],
-                [balanceDate]: fromBalance
+                [currentBalanceDate]: fromBalance
             },
             [toAccountId]: {
                 ...balances[toAccountId],
-                [balanceDate]: toBalance
+                [currentBalanceDate]: toBalance
             }
         };
     });
-    console.log('balances', balances)
+    console.log('balances', balances);
 };
 
 rebalanceAll();
