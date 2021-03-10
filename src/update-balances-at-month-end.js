@@ -14,8 +14,6 @@ const updateBalancesAtMonthEnd = async () => {
         balancesObject[fromAccountId] = balancesObject[fromAccountId] ? balancesObject[fromAccountId] - amount : amount * -1;
         balancesObject[toAccountId] = balancesObject[toAccountId] ? balancesObject[toAccountId] + amount : amount;
     });
-    // TODO: is there a bug somewhere here with the date?
-    // TODO: add transaction wrapper?
 
     await insertNewBalances(balancesObject);
 };

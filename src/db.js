@@ -121,6 +121,13 @@ export const insertNewBalances = async (balances) => {
     db.quit();
 };
 
+export const reinsertAllBalancesNew = async (balances) => {
+    const valuesString = balances.reduce((acc, current) => `${acc}, (${current.accountId}, ${current.balance}, '${current.date}')`, '').slice(2);
+
+    await db.query(`INSERT INTO balances (accountId, balance, date) values ${valuesString}`);
+    db.quit();
+};
+
 export const deleteAllBalances = async () => {
     await db.query('DELETE FROM balances WHERE balanceId > 0');
     db.quit();

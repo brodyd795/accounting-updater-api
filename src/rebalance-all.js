@@ -1,6 +1,6 @@
 import dateFns from 'date-fns';
 
-import {deleteAllBalances, selectAllTransactions} from './db.js';
+import {deleteAllBalances, reinsertAllBalancesNew, selectAllTransactions} from './db.js';
 
 const formatBalanceDate = (date) => `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, '0')}-01`;
 
@@ -80,6 +80,8 @@ const rebalanceAll = async () => {
         };
     });
     const balancesToInsert = formatBalancesForDb(balances);
+
+    await reinsertAllBalancesNew(balancesToInsert);
 };
 
 rebalanceAll();
