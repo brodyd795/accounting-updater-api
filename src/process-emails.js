@@ -35,14 +35,18 @@ const getAmount = (regexOne, regexTwo, body) => {
     return amount;
 };
 
-const parseCreditCardPurchaseEmail = (body, identifiers, accounts) => {
+const formatDateForDb = (date) => date.toISOString().split('T')[0];
+
+const parseCreditCardPurchaseEmail = (email, identifiers, accounts) => {
+    const {date, body} = email;
+
     const {fastFoodLocations, gasLocations, groceriesLocations} = identifiers;
-    const amountAndLocation = /charged \$[\d,]+\.\d+ [^.]+?\./.exec(body)[0];
+    const amountAndLocation = /charged \$[\d,]+\.\d+ [^.]+?\./i.exec(body)[0];
     const amountRaw = /[\d,]+\.\d+/.exec(amountAndLocation)[0];
     const amount = parseFloat(amountRaw.replace(',', '') * 100);
     const fromAccount = getAccountId(CATEGORIES.DEBTS, NAMES.CREDIT_CARD, accounts);
-    const locationRaw = /at [^.]+?\./.exec(amountAndLocation)[0];
-    const location = locationRaw.replace(/at |\./g, '');
+    const locationRaw = /at [^.]+?\./i.exec(amountAndLocation)[0];
+    const location = locationRaw.replace(/at |\./ig, '');
     const comment = location.replace(/&.+;/, '\'');
     let toAccount;
 
@@ -59,13 +63,16 @@ const parseCreditCardPurchaseEmail = (body, identifiers, accounts) => {
     return {
         amount,
         comment,
+        date: formatDateForDb(date),
         fromAccount,
         toAccount
     };
 };
 
-const parseCheckingWithdrawalEmail = (body, identifiers, accounts) => {
-    const amount = getAmount(new RegExp(/transaction\s+of\s+\$[\d,]+\.\d+[^.]+?\./), new RegExp(/[\d,]+\.\d+/), body);
+const parseCheckingWithdrawalEmail = (email, identifiers, accounts) => {
+    const {date, body} = email;
+
+    const amount = getAmount(new RegExp(/transaction\s+of\s+\$[\d,]+\.\d+[^.]+?\./, 'i'), new RegExp(/[\d,]+\.\d+/), body);
     const fromAccount = getAccountId(CATEGORIES.ASSETS, NAMES.US_BANK, accounts);
     let toAccount,
         comment;
@@ -87,13 +94,16 @@ const parseCheckingWithdrawalEmail = (body, identifiers, accounts) => {
     return {
         amount,
         comment,
+        date: formatDateForDb(date),
         fromAccount,
         toAccount
     };
 };
 
-const parseDepositEmail = (body, identifiers, accounts) => {
-    const amount = getAmount(new RegExp(/Deposit\s+of\s+\$[\d,]+\.\d+/), new RegExp(/[\d,]+\.\d+/), body);
+const parseDepositEmail = (email, identifiers, accounts) => {
+    const {date, body} = email;
+
+    const amount = getAmount(new RegExp(/Deposit\s+of\s+\$[\d,]+\.\d+/, 'i'), new RegExp(/[\d,]+\.\d+/), body);
     const toAccount = getAccountId(CATEGORIES.ASSETS, NAMES.US_BANK, accounts);
     let fromAccount,
         comment;
@@ -109,21 +119,24 @@ const parseDepositEmail = (body, identifiers, accounts) => {
     return {
         amount,
         comment,
+        date: formatDateForDb(date),
         fromAccount,
         toAccount
     };
 };
 
-const parseEmail = async (body) => {
+const parseEmail = async (email) => {
+    const {body} = email;
+
     const {identifiers, accounts} = await getAccountsAndTransactionIdentifiers();
 
     if (body.includes('charged')) {
-        return parseCreditCardPurchaseEmail(body, identifiers, accounts);
+        return parseCreditCardPurchaseEmail(email, identifiers, accounts);
     } else if (body.includes('Your transaction of')) {
-        return parseCheckingWithdrawalEmail(body, identifiers, accounts);
+        return parseCheckingWithdrawalEmail(email, identifiers, accounts);
     }
 
-    return parseDepositEmail(body, identifiers, accounts);
+    return parseDepositEmail(email, identifiers, accounts);
 };
 
 const processTransaction = async (transaction) => {

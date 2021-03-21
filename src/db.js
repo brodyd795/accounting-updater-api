@@ -20,11 +20,9 @@ export const insertTransaction = async (transaction) => {
         toAccount,
         fromAccount,
         amount,
-        comment
+        comment,
+        date
     } = transaction;
-
-    const now = new Date();
-    const date = now.toISOString().split('T')[0];
 
     await db.query(
         'INSERT INTO transactions (date, fromAccountId, toAccountId, amount, comment) VALUES(?, ?, ?, ?, ?)',
