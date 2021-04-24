@@ -87,7 +87,7 @@ const parseCheckingWithdrawalEmail = (email, identifiers, accounts) => {
         toAccount = getAccountId(CATEGORIES.DEBTS, NAMES.CREDIT_CARD, accounts);
         comment = 'Pay off credit card';
     } else {
-        toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.OTHER, accounts);
+        toAccount = getAccountId(CATEGORIES.EXPENSES, NAMES.OTHER_EXPENSE, accounts);
         comment = 'Other';
     }
 
