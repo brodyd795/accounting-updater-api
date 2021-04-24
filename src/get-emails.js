@@ -2,6 +2,7 @@ import fs from 'fs';
 
 import googleapis from 'googleapis';
 import dotenv from 'dotenv';
+import dateFns from 'date-fns';
 
 import {authorize} from './gmail-auth.js';
 
@@ -24,7 +25,7 @@ const getEmails = async (auth) => {
         return [];
     }
 
-    const emailBodies = [];
+    const emailResults = [];
 
     for (const email of emails) {
         const message = await gmail.users.messages.get({
@@ -32,13 +33,22 @@ const getEmails = async (auth) => {
             id: email.id,
             userId: 'me'
         });
-        const fromHeader = message.data.payload.headers.find((header) => header.name === 'From');
+        const headers = message.data.payload.headers;
+
+        const fromHeader = headers.find((header) => header.name === 'From');
         const isFromBank = fromHeader.value.toLowerCase().includes(`${process.env.BANK_EMAIL}@`);
 
         if (isFromBank) {
+            const dateReceived = new Date(headers.find((header) => header.name === 'Date').value);
+            const hoursOffset = dateReceived.getTimezoneOffset() / 60;
+            const date = dateFns.subHours(dateReceived, hoursOffset);
+
             const body = Buffer.from(message.data.payload.parts[0].body.data, 'base64').toString();
 
-            emailBodies.push(body);
+            emailResults.push({
+                body,
+                date
+            });
         }
 
         await gmail.users.messages.modify({
@@ -51,7 +61,7 @@ const getEmails = async (auth) => {
         });
     }
 
-    return emailBodies;
+    return emailResults;
 };
 
 export const getEmailsAndMarkAsRead = () => new Promise((resolve) => {
