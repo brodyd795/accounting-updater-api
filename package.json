@@ -16,6 +16,8 @@
 	},
 	"homepage": "https://github.com/brodyd795/accounting-updater#readme",
 	"dependencies": {
+		"@sentry/node": "^6.3.1",
+		"@sentry/tracing": "^6.3.1",
 		"date-fns": "^2.17.0",
 		"dotenv": "^8.2.0",
 		"googleapis": "^39.2.0",
