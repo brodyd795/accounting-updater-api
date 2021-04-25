@@ -8,7 +8,7 @@ import {authorize} from './gmail-auth.js';
 
 dotenv.config();
 
-const getEmails = async (auth) => {
+const fetchEmails = async (auth) => {
     const gmail = googleapis.google.gmail({
         auth,
         version: 'v1'
@@ -47,25 +47,17 @@ const getEmails = async (auth) => {
 
             emailResults.push({
                 body,
-                date
+                date,
+                id: email.id
             });
         }
-
-        await gmail.users.messages.modify({
-            auth,
-            id: email.id,
-            resource: {
-                removeLabelIds: ['UNREAD']
-            },
-            userId: 'me'
-        });
     }
 
     return emailResults;
 };
 
-export const getEmailsAndMarkAsRead = () => new Promise((resolve) => {
+export const getEmails = () => new Promise((resolve) => {
     const credentials = JSON.parse(fs.readFileSync('credentials.json'));
 
-    authorize(credentials, (auth) => resolve(getEmails(auth)));
+    authorize(credentials, (auth) => resolve(fetchEmails(auth)));
 });

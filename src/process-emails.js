@@ -1,6 +1,8 @@
 import dotenv from 'dotenv';
+import Sentry from '@sentry/node';
 
 import {insertTransaction, getAccountsAndTransactionIdentifiers} from './db.js';
+import {markEmailAsRead} from './mark-email-as-read.js';
 
 dotenv.config();
 
@@ -38,7 +40,7 @@ const getAmount = (regexOne, regexTwo, body) => {
 const formatDateForDb = (date) => date.toISOString().split('T')[0];
 
 const parseCreditCardPurchaseEmail = (email, identifiers, accounts) => {
-    const {date, body} = email;
+    const {date, body, id} = email;
 
     const {fastFoodLocations, gasLocations, groceriesLocations} = identifiers;
     const amountAndLocation = /charged \$[\d,]+\.\d+ [^.]+?\./i.exec(body)[0];
@@ -65,12 +67,13 @@ const parseCreditCardPurchaseEmail = (email, identifiers, accounts) => {
         comment,
         date: formatDateForDb(date),
         fromAccount,
+        id,
         toAccount
     };
 };
 
 const parseCheckingWithdrawalEmail = (email, identifiers, accounts) => {
-    const {date, body} = email;
+    const {date, body, id} = email;
 
     const amount = getAmount(new RegExp(/transaction\s+of\s+\$[\d,]+\.\d+[^.]+?\./, 'i'), new RegExp(/[\d,]+\.\d+/), body);
     const fromAccount = getAccountId(CATEGORIES.ASSETS, NAMES.US_BANK, accounts);
@@ -96,12 +99,13 @@ const parseCheckingWithdrawalEmail = (email, identifiers, accounts) => {
         comment,
         date: formatDateForDb(date),
         fromAccount,
+        id,
         toAccount
     };
 };
 
 const parseDepositEmail = (email, identifiers, accounts) => {
-    const {date, body} = email;
+    const {date, body, id} = email;
 
     const amount = getAmount(new RegExp(/Deposit\s+of\s+\$[\d,]+\.\d+/, 'i'), new RegExp(/[\d,]+\.\d+/), body);
     const toAccount = getAccountId(CATEGORIES.ASSETS, NAMES.US_BANK, accounts);
@@ -121,6 +125,7 @@ const parseDepositEmail = (email, identifiers, accounts) => {
         comment,
         date: formatDateForDb(date),
         fromAccount,
+        id,
         toAccount
     };
 };
@@ -139,24 +144,17 @@ const parseEmail = async (email) => {
     return parseDepositEmail(email, identifiers, accounts);
 };
 
-const processTransaction = async (transaction) => {
-    await insertTransaction(transaction);
-};
-
-const processTransactions = async (transactions) => {
-    for (const transaction of transactions) {
-        await processTransaction(transaction);
-    }
-};
-
 export const processEmails = async (emails) => {
-    const transactions = [];
-
     for (const email of emails) {
-        const results = await parseEmail(email);
+        try {
+            const transaction = await parseEmail(email);
 
-        transactions.push(results);
+            await insertTransaction(transaction);
+            await markEmailAsRead(transaction.id);
+        } catch (error) {
+            Sentry.captureException(error);
+
+            continue;
+        }
     }
-
-    await processTransactions(transactions);
 };
