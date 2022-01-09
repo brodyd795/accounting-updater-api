@@ -20,7 +20,6 @@ const fetchEmails = async (auth) => {
         userId: 'me'
     });
     const emails = rawEmailData.data.messages;
-
     if (!emails) {
         return [];
     }
@@ -36,7 +35,7 @@ const fetchEmails = async (auth) => {
         const headers = message.data.payload.headers;
 
         const fromHeader = headers.find((header) => header.name === 'From');
-        const isFromBank = fromHeader.value.toLowerCase().includes(`${process.env.BANK_EMAIL}@`);
+        const isFromBank = fromHeader.value.toLowerCase().includes(process.env.BANK_EMAIL);
 
         if (isFromBank) {
             const dateReceived = new Date(headers.find((header) => header.name === 'Date').value);
